@@ -1,4 +1,4 @@
-package digital;
+package com.company.digital;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
