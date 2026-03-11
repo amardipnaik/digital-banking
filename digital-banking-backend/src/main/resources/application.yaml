@@ -17,3 +17,14 @@ management:
   endpoint:
     health:
       show-details: always
+
+app:
+  auth:
+    jwt-secret: "digital-banking-super-secret-key-for-jwt-signing-256-bits"
+    jwt-expiration-seconds: 86400
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
