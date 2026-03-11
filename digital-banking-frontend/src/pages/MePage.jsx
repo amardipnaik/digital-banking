@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { me } from '../api/authApi'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 import { getApiErrorMessage } from '../lib/http'
 
 export default function MePage() {

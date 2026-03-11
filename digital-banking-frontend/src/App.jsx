@@ -1,39 +1,20 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import HomePage from './pages/HomePage'
-import RegisterPage from './pages/RegisterPage'
-import LoginPage from './pages/LoginPage'
-import VerifyPage from './pages/VerifyPage'
-import PasswordPage from './pages/PasswordPage'
-import MePage from './pages/MePage'
-import AdminUserStatusPage from './pages/AdminUserStatusPage'
-import ProtectedRoute from './routes/ProtectedRoute'
+import AuthWorkspacePage from './pages/AuthWorkspacePage'
 
 function App() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/verify" element={<VerifyPage />} />
-        <Route path="/password" element={<PasswordPage />} />
-        <Route
-          path="/me"
-          element={
-            <ProtectedRoute>
-              <MePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/user-status"
-          element={
-            <ProtectedRoute requireAdmin>
-              <AdminUserStatusPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/" element={<AuthWorkspacePage />} />
+        <Route path="/status" element={<HomePage />} />
+        <Route path="/login" element={<Navigate to="/" replace />} />
+        <Route path="/register" element={<Navigate to="/?tab=register" replace />} />
+        <Route path="/verify" element={<Navigate to="/?tab=verify" replace />} />
+        <Route path="/password" element={<Navigate to="/?tab=password" replace />} />
+        <Route path="/me" element={<Navigate to="/?tab=me" replace />} />
+        <Route path="/admin/user-status" element={<Navigate to="/?tab=admin" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

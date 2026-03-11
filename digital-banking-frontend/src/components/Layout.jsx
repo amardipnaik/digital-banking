@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 
 function linkClass({ isActive }) {
   return isActive ? 'nav-link nav-link-active' : 'nav-link'
@@ -22,27 +22,18 @@ export default function Layout({ children }) {
         </Link>
         <nav className="top-nav">
           <NavLink to="/" className={linkClass}>
-            Home
+            Auth
           </NavLink>
-          <NavLink to="/register" className={linkClass}>
-            Register
+          <NavLink to="/status" className={linkClass}>
+            Status
           </NavLink>
-          <NavLink to="/login" className={linkClass}>
-            Login
-          </NavLink>
-          <NavLink to="/verify" className={linkClass}>
-            Verify
-          </NavLink>
-          <NavLink to="/password" className={linkClass}>
-            Password
-          </NavLink>
-          <NavLink to="/me" className={linkClass}>
+          <Link to="/?tab=me" className="nav-link">
             My Profile
-          </NavLink>
+          </Link>
           {isAdmin && (
-            <NavLink to="/admin/user-status" className={linkClass}>
+            <Link to="/?tab=admin" className="nav-link">
               Admin
-            </NavLink>
+            </Link>
           )}
         </nav>
         <div className="session-actions">
