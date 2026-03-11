@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:digitalbank;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  config:
+    import: ""
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  auth:
+    jwt-secret: "test-secret-key-for-jwt-signing-which-is-at-least-32-bytes"
+    jwt-expiration-seconds: 86400
