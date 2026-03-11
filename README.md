@@ -425,3 +425,12 @@ Used by **Admin** to manage all bank customer records and KYC verification.
 | **Testing**      | JUnit 5 + Mockito; minimum 80% code coverage                                            |
 | **API Docs**     | Swagger UI available at `/swagger-ui.html`                                               |
 | **CORS**         | Configured to allow requests from React frontend origin                                  |
+
+---
+
+## 🔗 Local Endpoints
+
+- [http://localhost:8080/](http://localhost:8080/)
+- [http://localhost:8080/api/health](http://localhost:8080/api/health)
+- [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+- [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
