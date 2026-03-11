@@ -143,7 +143,7 @@ Suggested columns:
   - set `users.lock_until` (example: current time + 30 minutes)
   - insert `login_activity_logs` with `result='BLOCKED'`
 - On successful login:
-  - allow only if `status='ACTIVE'` and not locked by time
+  - allow if status is `ACTIVE` or `PENDING_VERIFICATION`, and account is not currently locked
   - reset `failed_login_attempts` to `0`
   - clear `last_failed_login_at`
   - update `last_login_at` and `last_login_ip`
@@ -155,8 +155,8 @@ Suggested columns:
   - reset lock and failed attempts fields
 
 ## Verification Rules
-- Customer can login only when both `email_verified = TRUE` and `mobile_verified = TRUE`.
 - Before both verifications are complete, keep status as `PENDING_VERIFICATION`.
+- Customer login is still allowed in `PENDING_VERIFICATION`; UI/API should prompt user to complete verification post-login.
 - Admin users may be seeded as verified and `ACTIVE` by default.
 - Verification tokens are stored in `auth_tokens` with `token_type` as `EMAIL_VERIFY` or `MOBILE_VERIFY`.
 - Password reset tokens are stored in `auth_tokens` with `token_type` as `PASSWORD_RESET`.

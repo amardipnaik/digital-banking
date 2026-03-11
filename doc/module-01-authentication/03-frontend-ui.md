@@ -1,29 +1,46 @@
 # Module 01 Authentication - Frontend UI Design
 
 ## Module Summary
-React UI pages for sign-in, sign-up, and password reset flows.
+React UI for authentication and verification flows integrated with backend auth APIs.
 
-## Pages / Routes
-- `/login`
-- `/register`
-- `/forgot-password`
+## Routes
+- `/` -> redirects to `/login`
+- `/login` -> login form + inline forgot/reset password flow
+- `/register` -> customer registration form
+- `/me` -> authenticated profile + verification actions
+- `/admin/user-status` -> admin-only user status controls
 
-## UI Components
-- Auth form container
-- Input components for email/password/profile fields
-- Validation and error message blocks
+## Login Screen (`/login`)
+- Fields: `loginId` (email/mobile), `password`
+- Behavior:
+  - Sends background `deviceId` automatically (not shown in UI).
+  - On success, redirects to `/me`.
+  - Shows inline API error message.
+- Forgot Password:
+  - `Forgot Password?` toggle reveals:
+    - request reset token form
+    - set new password form
 
-## Form Fields and Validation
-- Login: email, password.
-- Register: fullName, email, phoneNumber, dateOfBirth, address, password, confirmPassword.
-- Forgot password: email.
+## Register Screen (`/register`)
+- Fields: fullName, email, mobileNumber, dateOfBirth, password, confirmPassword
+- Success behavior:
+  - does not show user ID
+  - redirects user to `/login`
 
-## UI States
-- Loading: disable submit and show spinner.
-- Empty: initial form state.
-- Error: inline field and server message.
-- Success: redirect or confirmation toast/message.
+## Profile Screen (`/me`)
+- Displays user identity and status with role/status badges.
+- Shows verification state for email/mobile.
+- If channel is not verified:
+  - show `Request OTP`
+  - show OTP input + `Verify` only after request is made
+  - allow resend OTP
 
-## Accessibility Notes
-- Keyboard navigation for all controls.
-- Proper labels and descriptive error text for fields.
+## Admin Screen (`/admin/user-status`)
+- For admin role only.
+- Updates target user status to `ACTIVE` or `DISABLED`.
+
+## UX/Validation Notes
+- Inputs have labels and inline validation requirements.
+- Loading states disable action buttons.
+- Errors use common API error message parser.
+- Mobile responsive grid collapses to one column.

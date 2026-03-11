@@ -1,16 +1,18 @@
 # Module 01 Authentication - API Design
 
 ## Module Summary
-API contract for role-based authentication, verification, password reset, login activity tracking, and admin account control.
+API contract for registration, login, verification, password reset, current-user details, and admin status controls.
 
 ## API Conventions
 - Base path: `/api`
 - Content type: `application/json`
-- Auth header for protected APIs: `Authorization: Bearer <jwt>`
-- Login identifier supports either email or mobile number.
-- All responses use a consistent envelope.
+- Protected APIs require `Authorization: Bearer <jwt>`
+- `loginId` accepts either email or mobile number
+- Standard response envelope for all APIs
 
-### Success Response Envelope
+## Response Envelope
+
+Success:
 ```json
 {
   "success": true,
@@ -19,7 +21,7 @@ API contract for role-based authentication, verification, password reset, login 
 }
 ```
 
-### Error Response Envelope
+Error:
 ```json
 {
   "success": false,
@@ -32,30 +34,24 @@ API contract for role-based authentication, verification, password reset, login 
 }
 ```
 
-## Endpoint List
+## Endpoint Catalog
 
-### Public Endpoints
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|--------|
-| POST | `/api/auth/register/customer` | Register customer account | Public |
-| POST | `/api/auth/login` | Login with email/mobile + password | Public |
-| POST | `/api/auth/verification/request` | Issue verification token/OTP for email or mobile | Public |
-| POST | `/api/auth/verification/confirm` | Confirm verification token/OTP for email or mobile | Public |
-| POST | `/api/auth/password/forgot` | Create password reset token | Public |
-| POST | `/api/auth/password/reset` | Reset password with token | Public |
+### Public
+- `POST /api/auth/register/customer`
+- `POST /api/auth/login`
+- `POST /api/auth/verification/request`
+- `POST /api/auth/verification/confirm`
+- `POST /api/auth/password/forgot`
+- `POST /api/auth/password/reset`
 
-### Authenticated Endpoints
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|--------|
-| POST | `/api/auth/logout` | Logout current session/token | Authenticated |
-| GET | `/api/auth/me` | Current authenticated user summary | Authenticated |
+### Authenticated
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
 
-### Admin Endpoints (Account Controls)
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|--------|
-| PATCH | `/api/admin/auth/users/{userId}/status` | Update user status (`ACTIVE`/`DISABLED`) | Admin |
+### Admin
+- `PATCH /api/admin/auth/users/{userId}/status`
 
-## Request and Response Contracts
+## Contracts
 
 ### 1) Register Customer
 `POST /api/auth/register/customer`
@@ -78,9 +74,11 @@ Response (`201 Created`):
   "success": true,
   "timestamp": "2026-03-11T17:30:00Z",
   "data": {
-    "userId": 2004,
+    "id": 2004,
     "role": "CUSTOMER",
     "status": "PENDING_VERIFICATION",
+    "email": "anita@example.com",
+    "mobileNumber": "9876543210",
     "emailVerified": false,
     "mobileVerified": false
   }
@@ -90,7 +88,7 @@ Response (`201 Created`):
 ### 2) Login
 `POST /api/auth/login`
 
-Request:
+Request (`deviceId` optional):
 ```json
 {
   "loginId": "anita@example.com",
@@ -109,22 +107,26 @@ Response (`200 OK`):
     "tokenType": "Bearer",
     "expiresIn": 86400,
     "user": {
-      "id": 2001,
+      "id": 2004,
       "role": "CUSTOMER",
-      "status": "ACTIVE"
+      "status": "PENDING_VERIFICATION",
+      "email": "anita@example.com",
+      "mobileNumber": "9876543210",
+      "emailVerified": false,
+      "mobileVerified": false
     }
   }
 }
 ```
 
-Business behavior:
-- On each failed password attempt, increment `failed_login_attempts` and write `login_activity_logs`.
-- At 3 failed attempts, set status to `LOCKED`.
-- `DISABLED` users cannot login.
-- Customer login requires both email and mobile verification.
-- `User-Agent` is captured from request header (not request body).
+Login behavior:
+- Wrong password increments failed attempts and logs activity.
+- At 3 failed attempts account is locked (`LOCKED`).
+- `DISABLED` users are blocked.
+- `PENDING_VERIFICATION` users are allowed to login.
+- `User-Agent` is captured from request header.
 
-### 3) Verification Request
+### 3) Request Verification OTP
 `POST /api/auth/verification/request`
 
 Request:
@@ -135,11 +137,18 @@ Request:
 }
 ```
 
-Response (`200 OK`): token generated in `auth_tokens` based on channel.
-- `channel=EMAIL` -> `token_type=EMAIL_VERIFY`
-- `channel=MOBILE` -> `token_type=MOBILE_VERIFY`
+Response (`200 OK`):
+```json
+{
+  "success": true,
+  "timestamp": "2026-03-11T17:30:00Z",
+  "data": {
+    "message": "Verification token generated successfully"
+  }
+}
+```
 
-### 4) Verification Confirm
+### 4) Confirm Verification OTP
 `POST /api/auth/verification/confirm`
 
 Request:
@@ -151,7 +160,7 @@ Request:
 }
 ```
 
-Response (`200 OK`): marks target channel verified and consumes token (`is_used=true`, `consumed_at` set).
+Response (`200 OK`): target channel is marked verified; token is consumed.
 
 ### 5) Forgot Password
 `POST /api/auth/password/forgot`
@@ -163,7 +172,16 @@ Request:
 }
 ```
 
-Response (`200 OK`): creates `auth_tokens` row with `token_type=PASSWORD_RESET` and `channel=null`.
+Response (`200 OK`):
+```json
+{
+  "success": true,
+  "timestamp": "2026-03-11T17:30:00Z",
+  "data": {
+    "message": "If account exists, password reset instructions have been generated"
+  }
+}
+```
 
 ### 6) Reset Password
 `POST /api/auth/password/reset`
@@ -178,24 +196,23 @@ Request:
 }
 ```
 
-Response (`200 OK`): password changed, token consumed, failed login count reset.
+Response (`200 OK`): password hash updated and reset token consumed.
 
 ### 7) Logout
 `POST /api/auth/logout`
 
-Request:
+Response (`200 OK`):
 ```json
-{}
+{
+  "success": true,
+  "timestamp": "2026-03-11T17:30:00Z",
+  "data": {
+    "message": "Logout successful"
+  }
+}
 ```
 
-Response (`200 OK`): logout accepted.
-
-Logout strategy (explicit v1 behavior):
-- Access token is short-lived JWT.
-- Client must discard token on logout.
-- If revocation is enabled, API stores token `jti` in denylist cache until token expiry.
-
-### 8) Authenticated User Summary
+### 8) Current User
 `GET /api/auth/me`
 
 Response (`200 OK`):
@@ -204,13 +221,13 @@ Response (`200 OK`):
   "success": true,
   "timestamp": "2026-03-11T17:30:00Z",
   "data": {
-    "id": 2001,
+    "id": 2004,
     "role": "CUSTOMER",
     "email": "anita@example.com",
     "mobileNumber": "9876543210",
-    "status": "ACTIVE",
-    "emailVerified": true,
-    "mobileVerified": true
+    "status": "PENDING_VERIFICATION",
+    "emailVerified": false,
+    "mobileVerified": false
   }
 }
 ```
@@ -226,39 +243,40 @@ Request:
 }
 ```
 
-Response (`200 OK`):
-- `status=DISABLED`: sets `users.status='DISABLED'`, stores reason/by/at.
-- `status=ACTIVE`: sets `users.status='ACTIVE'`, clears disable and lock fields.
+Rules:
+- Only `ACTIVE` and `DISABLED` accepted.
+- `DISABLED` stores reason/by/at metadata.
+- `ACTIVE` clears disable and lock fields.
 
-## Status Codes
-- `200 OK`: successful action.
-- `201 Created`: successful customer registration.
-- `400 Bad Request`: validation error, invalid request state.
-- `401 Unauthorized`: missing/invalid JWT or credentials.
-- `403 Forbidden`: role/access denied.
-- `404 Not Found`: user/token not found.
-- `409 Conflict`: duplicate email/mobile, active-token uniqueness conflict.
-- `423 Locked`: account locked due to max failed attempts.
-- `429 Too Many Requests`: request throttled (if rate limiter is enabled).
-- `500 Internal Server Error`: unexpected server error.
+## HTTP Status Codes
+- `200 OK`
+- `201 Created`
+- `400 Bad Request`
+- `401 Unauthorized`
+- `403 Forbidden`
+- `404 Not Found`
+- `409 Conflict`
+- `423 Locked`
+- `500 Internal Server Error`
 
-## Standard Error Codes
-- `AUTH_INVALID_CREDENTIALS`
-- `AUTH_ACCOUNT_LOCKED`
+## Standard Error Codes (Current Implementation)
 - `AUTH_ACCOUNT_DISABLED`
-- `AUTH_EMAIL_NOT_VERIFIED`
-- `AUTH_MOBILE_NOT_VERIFIED`
-- `AUTH_MAX_LOGIN_ATTEMPTS_REACHED`
-- `AUTH_TOKEN_INVALID`
-- `AUTH_TOKEN_EXPIRED`
-- `AUTH_TOKEN_ALREADY_USED`
-- `AUTH_MAX_TOKEN_ATTEMPTS_REACHED`
-- `AUTH_USER_ALREADY_EXISTS`
-- `AUTH_ACCESS_DENIED`
+- `AUTH_ACCOUNT_LOCKED`
+- `AUTH_ACCOUNT_NOT_ACTIVE`
+- `AUTH_INVALID_CREDENTIALS`
 - `AUTH_INVALID_STATUS_TRANSITION`
+- `AUTH_MAX_LOGIN_ATTEMPTS_REACHED`
+- `AUTH_MAX_TOKEN_ATTEMPTS_REACHED`
+- `AUTH_PASSWORD_MISMATCH`
+- `AUTH_TOKEN_ALREADY_USED`
+- `AUTH_TOKEN_EXPIRED`
+- `AUTH_TOKEN_INVALID`
+- `AUTH_UNAUTHORIZED`
+- `AUTH_USER_ALREADY_EXISTS`
+- `AUTH_USER_NOT_FOUND`
 
 ## DB Mapping Notes
-- `users.status` drives account state checks (`PENDING_VERIFICATION`, `ACTIVE`, `LOCKED`, `DISABLED`).
-- `auth_tokens` handles email verify, mobile verify, and password reset via `token_type`.
-- `login_activity_logs` captures each login attempt with success/failure/blocked/disabled result.
-- Unique active token rule is enforced by `user_id + token_type + channel`.
+- `users.status` values: `PENDING_VERIFICATION`, `ACTIVE`, `LOCKED`, `DISABLED`.
+- `auth_tokens` stores all verification and reset token records.
+- `login_activity_logs` stores each login attempt and metadata.
+- Unique active token rule: `user_id + token_type + channel`.

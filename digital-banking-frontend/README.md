@@ -60,7 +60,6 @@ npm run preview
 - `/` redirects to `/login`
 - `/login` login
 - `/login` also contains `Forgot Password?` and set-new-password flow
-- `/login` also shows backend debug status (`/api/health`)
 - `/register` customer registration
 - `/me` authenticated profile + email/mobile verification actions
 - `/admin/user-status` admin user status update
