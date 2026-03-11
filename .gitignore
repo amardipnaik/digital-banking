@@ -1,0 +1,21 @@
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Env / local overrides
+.env
+.env.*
+!.env.example
+
+# Backend project local outputs (defensive, backend has its own .gitignore too)
+digital-banking-backend/.gradle/
+digital-banking-backend/.gradle-user/
+digital-banking-backend/build/
+digital-banking-backend/out/
