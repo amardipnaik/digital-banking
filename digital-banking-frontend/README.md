@@ -57,12 +57,12 @@ npm run preview
 
 ## 5) Implemented Pages
 
-- `/` backend health + links
-- `/register` customer registration
+- `/` redirects to `/login`
 - `/login` login
-- `/verify` request/confirm verification
-- `/password` forgot/reset password
-- `/me` authenticated profile
+- `/login` also contains `Forgot Password?` and set-new-password flow
+- `/login` also shows backend debug status (`/api/health`)
+- `/register` customer registration
+- `/me` authenticated profile + email/mobile verification actions
 - `/admin/user-status` admin user status update
 
 ## 6) How This Frontend Was Created (Reference)

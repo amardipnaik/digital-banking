@@ -195,6 +195,23 @@ class AuthModuleApiIntegrationTest {
 	}
 
 	@Test
+	void login_shouldAllowPendingVerificationCustomer() throws Exception {
+		createUser("pending@test.com", "9000000008", "Password1", RoleCode.CUSTOMER, false, false, UserStatus.PENDING_VERIFICATION);
+
+		String loginPayload = "{" +
+			"\"loginId\":\"pending@test.com\"," +
+			"\"password\":\"Password1\"," +
+			"\"deviceId\":\"PENDING-1\"}";
+
+		HttpResponse<String> response = request("POST", "/api/auth/login", loginPayload, null);
+		assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
+		JsonNode body = objectMapper.readTree(response.body());
+		assertThat(body.path("data").path("user").path("status").asText()).isEqualTo("PENDING_VERIFICATION");
+		assertThat(body.path("data").path("user").path("emailVerified").asBoolean()).isFalse();
+		assertThat(body.path("data").path("user").path("mobileVerified").asBoolean()).isFalse();
+	}
+
+	@Test
 	void adminCanDisableUser() throws Exception {
 		createUser("target@test.com", "9000000006", "Password1", RoleCode.CUSTOMER, true, true, UserStatus.ACTIVE);
 		createUser("admin@test.com", "9000000007", "Password1", RoleCode.ADMIN, true, true, UserStatus.ACTIVE);

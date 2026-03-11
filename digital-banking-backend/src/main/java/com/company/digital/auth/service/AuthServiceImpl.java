@@ -149,12 +149,8 @@ public class AuthServiceImpl implements AuthService {
 			throw new ApiException(HttpStatus.UNAUTHORIZED, "AUTH_INVALID_CREDENTIALS", "Invalid login credentials");
 		}
 
-		if (user.getRole().getCode() == RoleCode.CUSTOMER && (!user.isEmailVerified() || !user.isMobileVerified())) {
-			logAttempt(user, request.loginId(), user.getFailedLoginAttempts(), LoginResult.FAILURE, "ACCOUNT_NOT_VERIFIED", ipAddress, userAgent, request.deviceId());
-			throw new ApiException(HttpStatus.FORBIDDEN, "AUTH_ACCOUNT_NOT_VERIFIED", "Email and mobile must be verified before login");
-		}
-
-		if (user.getStatus() != UserStatus.ACTIVE) {
+		if (user.getStatus() != UserStatus.ACTIVE && user.getStatus() != UserStatus.PENDING_VERIFICATION) {
+			logAttempt(user, request.loginId(), user.getFailedLoginAttempts(), LoginResult.FAILURE, "ACCOUNT_NOT_ACTIVE", ipAddress, userAgent, request.deviceId());
 			throw new ApiException(HttpStatus.FORBIDDEN, "AUTH_ACCOUNT_NOT_ACTIVE", "Account is not active");
 		}
 

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { registerCustomer } from '../api/authApi'
 import { getApiErrorMessage } from '../lib/http'
 
@@ -12,6 +13,7 @@ const initialForm = {
 }
 
 export default function RegisterPage() {
+  const navigate = useNavigate()
   const [form, setForm] = useState(initialForm)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -29,10 +31,10 @@ export default function RegisterPage() {
     setMessage('')
 
     try {
-      const response = await registerCustomer(form)
-      const userId = response?.data?.id || response?.data?.userId
-      setMessage(`Customer registered successfully${userId ? ` (User ID: ${userId})` : ''}.`) 
+      await registerCustomer(form)
+      setMessage('Customer registered successfully.')
       setForm(initialForm)
+      navigate('/login', { replace: true })
     } catch (err) {
       setError(getApiErrorMessage(err))
     } finally {

@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
 
 function linkClass({ isActive }) {
@@ -17,27 +17,33 @@ export default function Layout({ children }) {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <Link to="/" className="brand">
+        <NavLink to="/" className="brand">
           Digital Banking
-        </Link>
+        </NavLink>
         <nav className="top-nav">
-          <NavLink to="/" className={linkClass}>
-            Auth
-          </NavLink>
-          <NavLink to="/status" className={linkClass}>
-            Status
-          </NavLink>
-          <Link to="/?tab=me" className="nav-link">
-            My Profile
-          </Link>
+          {!isAuthenticated && (
+            <>
+              <NavLink to="/login" className={linkClass}>
+                Login
+              </NavLink>
+              <NavLink to="/register" className={linkClass}>
+                Register
+              </NavLink>
+            </>
+          )}
+          {isAuthenticated && (
+            <NavLink to="/me" className={linkClass}>
+              My Profile
+            </NavLink>
+          )}
           {isAdmin && (
-            <Link to="/?tab=admin" className="nav-link">
+            <NavLink to="/admin/user-status" className={linkClass}>
               Admin
-            </Link>
+            </NavLink>
           )}
         </nav>
         <div className="session-actions">
-          <span className="session-user">{isAuthenticated ? `${user?.role || 'USER'}` : 'Guest'}</span>
+          {isAuthenticated ? <span className="session-user">{user?.role || 'USER'}</span> : null}
           {isAuthenticated ? (
             <button type="button" className="button button-secondary" onClick={handleLogout}>
               Logout
