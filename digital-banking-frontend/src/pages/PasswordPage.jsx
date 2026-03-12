@@ -30,8 +30,10 @@ export default function PasswordPage() {
     setError('')
     setForgotMessage('')
     try {
-      const response = await forgotPassword(forgotForm)
-      setForgotMessage(response?.data?.message || 'Forgot password request submitted.')
+      const loginId = forgotForm.loginId.trim()
+      const response = await forgotPassword({ loginId })
+      setForgotMessage(response?.message || 'Forgot password request submitted.')
+      setResetForm((previous) => ({ ...previous, loginId }))
     } catch (err) {
       setError(getApiErrorMessage(err))
     }
@@ -42,8 +44,13 @@ export default function PasswordPage() {
     setError('')
     setResetMessage('')
     try {
-      const response = await resetPassword(resetForm)
-      setResetMessage(response?.data?.message || 'Password reset completed.')
+      const payload = {
+        ...resetForm,
+        loginId: resetForm.loginId.trim(),
+        token: resetForm.token.trim(),
+      }
+      const response = await resetPassword(payload)
+      setResetMessage(response?.message || 'Password reset completed.')
     } catch (err) {
       setError(getApiErrorMessage(err))
     }

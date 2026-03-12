@@ -206,6 +206,43 @@ class AuthModuleApiIntegrationTest {
 	}
 
 	@Test
+	void forgotThenResetPassword_shouldSucceedWithDemoOtp() throws Exception {
+		createUser("otpreset@test.com", "9000000031", "Password1", RoleCode.CUSTOMER, true, true, UserStatus.ACTIVE);
+
+		HttpResponse<String> forgotResponse = request("POST", "/api/auth/password/forgot", "{\"loginId\":\"otpreset@test.com\"}", null);
+		assertThat(forgotResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
+
+		String resetPayload = "{" +
+			"\"loginId\":\"otpreset@test.com\"," +
+			"\"token\":\"654321\"," +
+			"\"newPassword\":\"Password2\"," +
+			"\"confirmPassword\":\"Password2\"}";
+
+		HttpResponse<String> resetResponse = request("POST", "/api/auth/password/reset", resetPayload, null);
+		assertThat(resetResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
+
+		User persisted = userRepository.findByEmailIgnoreCase("otpreset@test.com").orElseThrow();
+		assertThat(passwordEncoder.matches("Password2", persisted.getPasswordHash())).isTrue();
+	}
+
+	@Test
+	void resetPassword_shouldAcceptTrimmedOtpToken() throws Exception {
+		createUser("trim-token@test.com", "9000000032", "Password1", RoleCode.CUSTOMER, true, true, UserStatus.ACTIVE);
+
+		HttpResponse<String> forgotResponse = request("POST", "/api/auth/password/forgot", "{\"loginId\":\"trim-token@test.com\"}", null);
+		assertThat(forgotResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
+
+		String resetPayload = "{" +
+			"\"loginId\":\"trim-token@test.com\"," +
+			"\"token\":\" 654321 \"," +
+			"\"newPassword\":\"Password2\"," +
+			"\"confirmPassword\":\"Password2\"}";
+
+		HttpResponse<String> resetResponse = request("POST", "/api/auth/password/reset", resetPayload, null);
+		assertThat(resetResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
+	}
+
+	@Test
 	void loginThenMe_shouldReturnCurrentUser() throws Exception {
 		createUser("me@test.com", "9000000005", "Password1", RoleCode.CUSTOMER, true, true, UserStatus.ACTIVE);
 

@@ -31,8 +31,10 @@ import com.company.digital.auth.security.JwtService;
 import com.company.digital.auth.util.TokenHashingUtil;
 import com.company.digital.common.exception.ApiException;
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -181,7 +183,7 @@ public class AuthServiceImpl implements AuthService {
 		authToken.setUser(user);
 		authToken.setTokenType(tokenType);
 		authToken.setChannel(request.channel());
-		authToken.setExpiresAt(LocalDateTime.now().plusMinutes(VERIFY_TOKEN_EXPIRY_MINUTES));
+		authToken.setExpiresAt(normalizeTimestamp(LocalDateTime.now().plusMinutes(VERIFY_TOKEN_EXPIRY_MINUTES)));
 		authToken.setTokenHash(buildTokenHash(authToken, plainToken));
 		authToken.setAttemptCount((short) 0);
 		authToken.setMaxAttempts((short) 3);
@@ -236,7 +238,7 @@ public class AuthServiceImpl implements AuthService {
 			authToken.setUser(user);
 			authToken.setTokenType(TokenType.PASSWORD_RESET);
 			authToken.setChannel(null);
-			authToken.setExpiresAt(LocalDateTime.now().plusMinutes(RESET_TOKEN_EXPIRY_MINUTES));
+			authToken.setExpiresAt(normalizeTimestamp(LocalDateTime.now().plusMinutes(RESET_TOKEN_EXPIRY_MINUTES)));
 			authToken.setTokenHash(buildTokenHash(authToken, plainToken));
 			authToken.setAttemptCount((short) 0);
 			authToken.setMaxAttempts((short) 3);
@@ -329,6 +331,11 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	private void validateToken(AuthToken authToken, String plainToken) {
+		String normalizedToken = normalizeToken(plainToken);
+		if (normalizedToken.isBlank()) {
+			throw new ApiException(HttpStatus.BAD_REQUEST, "AUTH_TOKEN_INVALID", "Invalid token");
+		}
+
 		if (authToken.isUsed()) {
 			throw new ApiException(HttpStatus.BAD_REQUEST, "AUTH_TOKEN_ALREADY_USED", "Token has already been used");
 		}
@@ -344,7 +351,7 @@ public class AuthServiceImpl implements AuthService {
 			throw new ApiException(HttpStatus.BAD_REQUEST, "AUTH_MAX_TOKEN_ATTEMPTS_REACHED", "Maximum token attempts reached");
 		}
 
-		if (!matchesToken(authToken, plainToken)) {
+		if (!matchesToken(authToken, normalizedToken)) {
 			authToken.setAttemptCount((short) (authToken.getAttemptCount() + 1));
 			if (authToken.getAttemptCount() >= authToken.getMaxAttempts()) {
 				authToken.setUsed(true);
@@ -396,13 +403,16 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	private String buildTokenHash(AuthToken authToken, String plainToken) {
+		LocalDateTime normalizedExpiry = normalizeTimestamp(authToken.getExpiresAt());
 		String saltedToken = plainToken
 			+ "|"
 			+ authToken.getUser().getId()
 			+ "|"
 			+ authToken.getTokenType().name()
 			+ "|"
-			+ authToken.getExpiresAt();
+			+ (authToken.getChannel() == null ? "NONE" : authToken.getChannel().name())
+			+ "|"
+			+ normalizedExpiry;
 		return TokenHashingUtil.hash(saltedToken);
 	}
 
@@ -411,7 +421,48 @@ public class AuthServiceImpl implements AuthService {
 		if (legacyHash.equals(authToken.getTokenHash())) {
 			return true;
 		}
-		return buildTokenHash(authToken, plainToken).equals(authToken.getTokenHash());
+
+		if (buildTokenHash(authToken, plainToken).equals(authToken.getTokenHash())) {
+			return true;
+		}
+
+		return buildLegacyHashes(authToken, plainToken).contains(authToken.getTokenHash());
+	}
+
+	private Set<String> buildLegacyHashes(AuthToken authToken, String plainToken) {
+		Set<String> hashes = new LinkedHashSet<>();
+		LocalDateTime expiresAt = authToken.getExpiresAt();
+		if (expiresAt == null) {
+			return hashes;
+		}
+
+		hashes.add(buildLegacyHashWithExpiry(authToken, plainToken, expiresAt));
+		hashes.add(buildLegacyHashWithExpiry(authToken, plainToken, expiresAt.withNano((expiresAt.getNano() / 1_000) * 1_000)));
+		hashes.add(buildLegacyHashWithExpiry(authToken, plainToken, expiresAt.withNano((expiresAt.getNano() / 1_000_000) * 1_000_000)));
+		hashes.add(buildLegacyHashWithExpiry(authToken, plainToken, expiresAt.withNano(0)));
+		return hashes;
+	}
+
+	private String buildLegacyHashWithExpiry(AuthToken authToken, String plainToken, LocalDateTime expiresAt) {
+		String legacySaltedToken = plainToken
+			+ "|"
+			+ authToken.getUser().getId()
+			+ "|"
+			+ authToken.getTokenType().name()
+			+ "|"
+			+ expiresAt;
+		return TokenHashingUtil.hash(legacySaltedToken);
+	}
+
+	private String normalizeToken(String token) {
+		return token == null ? "" : token.trim();
+	}
+
+	private LocalDateTime normalizeTimestamp(LocalDateTime timestamp) {
+		if (timestamp == null) {
+			return null;
+		}
+		return timestamp.withNano((timestamp.getNano() / 1_000) * 1_000);
 	}
 
 	private void logAttempt(
