@@ -20,28 +20,20 @@ export default function Layout({ children }) {
         <NavLink to="/" className="brand">
           Digital Banking
         </NavLink>
-        <nav className="top-nav">
-          {!isAuthenticated && (
-            <>
-              <NavLink to="/login" className={linkClass}>
-                Login
-              </NavLink>
-              <NavLink to="/register" className={linkClass}>
-                Register
-              </NavLink>
-            </>
-          )}
-          {isAuthenticated && (
+        {isAuthenticated ? (
+          <nav className="top-nav">
             <NavLink to="/me" className={linkClass}>
               My Profile
             </NavLink>
-          )}
-          {isAdmin && (
-            <NavLink to="/admin/user-status" className={linkClass}>
-              Admin
-            </NavLink>
-          )}
-        </nav>
+            {isAdmin && (
+              <NavLink to="/admin/user-status" className={linkClass}>
+                Admin
+              </NavLink>
+            )}
+          </nav>
+        ) : (
+          <div className="topbar-spacer" />
+        )}
         <div className="session-actions">
           {isAuthenticated ? <span className="session-user">{user?.role || 'USER'}</span> : null}
           {isAuthenticated ? (

@@ -215,21 +215,21 @@ export default function MePage() {
                 </div>
                 <p className="verify-target">{profile.email}</p>
                 <div className="verify-form">
-                  <button className="button button-secondary" type="button" onClick={() => handleRequest('EMAIL')} disabled={loadingEmail}>
+                  <button className="button button-secondary auth-submit" type="button" onClick={() => handleRequest('EMAIL')} disabled={loadingEmail}>
                     {loadingEmail ? 'Requesting...' : emailOtpRequested ? 'Resend Email OTP' : 'Request Email OTP'}
                   </button>
                   {emailOtpRequested ? (
-                    <>
+                    <div className="otp-panel">
                       <label className="verify-label">
                         Enter Email OTP
                         <input value={emailToken} onChange={(event) => setEmailToken(event.target.value)} placeholder="6-digit OTP" />
                       </label>
-                      <button className="button" type="button" onClick={() => handleConfirm('EMAIL')} disabled={loadingEmail}>
+                      <button className="button auth-submit" type="button" onClick={() => handleConfirm('EMAIL')} disabled={loadingEmail}>
                         {loadingEmail ? 'Verifying...' : 'Verify Email'}
                       </button>
-                    </>
+                    </div>
                   ) : (
-                    <p className="verify-note">Request OTP to continue email verification.</p>
+                    <p className="verify-note">Click the button above to receive the OTP and continue verification.</p>
                   )}
                   {emailMessage ? <p className="status-success">{emailMessage}</p> : null}
                 </div>
@@ -244,21 +244,21 @@ export default function MePage() {
                 </div>
                 <p className="verify-target">{profile.mobileNumber}</p>
                 <div className="verify-form">
-                  <button className="button button-secondary" type="button" onClick={() => handleRequest('MOBILE')} disabled={loadingMobile}>
+                  <button className="button button-secondary auth-submit" type="button" onClick={() => handleRequest('MOBILE')} disabled={loadingMobile}>
                     {loadingMobile ? 'Requesting...' : mobileOtpRequested ? 'Resend Mobile OTP' : 'Request Mobile OTP'}
                   </button>
                   {mobileOtpRequested ? (
-                    <>
+                    <div className="otp-panel">
                       <label className="verify-label">
                         Enter Mobile OTP
                         <input value={mobileToken} onChange={(event) => setMobileToken(event.target.value)} placeholder="6-digit OTP" />
                       </label>
-                      <button className="button" type="button" onClick={() => handleConfirm('MOBILE')} disabled={loadingMobile}>
+                      <button className="button auth-submit" type="button" onClick={() => handleConfirm('MOBILE')} disabled={loadingMobile}>
                         {loadingMobile ? 'Verifying...' : 'Verify Mobile'}
                       </button>
-                    </>
+                    </div>
                   ) : (
-                    <p className="verify-note">Request OTP to continue mobile verification.</p>
+                    <p className="verify-note">Click the button above to receive the OTP and continue verification.</p>
                   )}
                   {mobileMessage ? <p className="status-success">{mobileMessage}</p> : null}
                 </div>

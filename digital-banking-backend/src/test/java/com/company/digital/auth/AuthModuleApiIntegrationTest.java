@@ -127,6 +127,35 @@ class AuthModuleApiIntegrationTest {
 	}
 
 	@Test
+	void verificationRequest_shouldAllowRepeatRequestsWithSameDemoOtp() throws Exception {
+		User user = createUser("repeat@test.com", "9000000012", "Password1", RoleCode.CUSTOMER, false, false, UserStatus.PENDING_VERIFICATION);
+		String payload = "{\"loginId\":\"repeat@test.com\",\"channel\":\"EMAIL\"}";
+
+		HttpResponse<String> first = request("POST", "/api/auth/verification/request", payload, null);
+		HttpResponse<String> second = request("POST", "/api/auth/verification/request", payload, null);
+
+		assertThat(first.statusCode()).isEqualTo(HttpStatus.OK.value());
+		assertThat(second.statusCode()).isEqualTo(HttpStatus.OK.value());
+
+		assertThat(authTokenRepository.findFirstByUserAndTokenTypeAndChannelAndIsUsedFalseOrderByCreatedAtDesc(
+			user, TokenType.EMAIL_VERIFY, TokenChannel.EMAIL)).isPresent();
+	}
+
+	@Test
+	void forgotPassword_shouldGenerateDemoOtpToken() throws Exception {
+		User user = createUser("forgot@test.com", "9000000099", "Password1", RoleCode.CUSTOMER, true, true, UserStatus.ACTIVE);
+		String payload = "{\"loginId\":\"forgot@test.com\"}";
+
+		HttpResponse<String> response = request("POST", "/api/auth/password/forgot", payload, null);
+		assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
+
+		AuthToken token = authTokenRepository
+			.findFirstByUserAndTokenTypeAndIsUsedFalseOrderByCreatedAtDesc(user, TokenType.PASSWORD_RESET)
+			.orElseThrow();
+		assertThat(token.getTokenHash()).isNotBlank();
+	}
+
+	@Test
 	void verificationConfirm_shouldMarkEmailVerified() throws Exception {
 		User user = createUser("confirm@test.com", "9000000003", "Password1", RoleCode.CUSTOMER, false, false, UserStatus.PENDING_VERIFICATION);
 

@@ -30,11 +30,9 @@ import com.company.digital.auth.security.AuthenticatedUser;
 import com.company.digital.auth.security.JwtService;
 import com.company.digital.auth.util.TokenHashingUtil;
 import com.company.digital.common.exception.ApiException;
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -48,6 +46,7 @@ public class AuthServiceImpl implements AuthService {
 	private static final int LOCK_MINUTES = 30;
 	private static final int VERIFY_TOKEN_EXPIRY_MINUTES = 10;
 	private static final int RESET_TOKEN_EXPIRY_MINUTES = 20;
+	private static final String DEMO_OTP = "654321";
 
 	private final RoleRepository roleRepository;
 	private final UserRepository userRepository;
@@ -56,7 +55,6 @@ public class AuthServiceImpl implements AuthService {
 	private final LoginActivityLogRepository loginActivityLogRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtService jwtService;
-	private final SecureRandom secureRandom = new SecureRandom();
 
 	public AuthServiceImpl(
 		RoleRepository roleRepository,
@@ -183,8 +181,8 @@ public class AuthServiceImpl implements AuthService {
 		authToken.setUser(user);
 		authToken.setTokenType(tokenType);
 		authToken.setChannel(request.channel());
-		authToken.setTokenHash(TokenHashingUtil.hash(plainToken));
 		authToken.setExpiresAt(LocalDateTime.now().plusMinutes(VERIFY_TOKEN_EXPIRY_MINUTES));
+		authToken.setTokenHash(buildTokenHash(authToken, plainToken));
 		authToken.setAttemptCount((short) 0);
 		authToken.setMaxAttempts((short) 3);
 		authToken.setUsed(false);
@@ -233,13 +231,13 @@ public class AuthServiceImpl implements AuthService {
 				token.setConsumedAt(LocalDateTime.now());
 			}
 
-			String plainToken = UUID.randomUUID().toString();
+			String plainToken = generateOtp();
 			AuthToken authToken = new AuthToken();
 			authToken.setUser(user);
 			authToken.setTokenType(TokenType.PASSWORD_RESET);
 			authToken.setChannel(null);
-			authToken.setTokenHash(TokenHashingUtil.hash(plainToken));
 			authToken.setExpiresAt(LocalDateTime.now().plusMinutes(RESET_TOKEN_EXPIRY_MINUTES));
+			authToken.setTokenHash(buildTokenHash(authToken, plainToken));
 			authToken.setAttemptCount((short) 0);
 			authToken.setMaxAttempts((short) 3);
 			authToken.setUsed(false);
@@ -346,8 +344,7 @@ public class AuthServiceImpl implements AuthService {
 			throw new ApiException(HttpStatus.BAD_REQUEST, "AUTH_MAX_TOKEN_ATTEMPTS_REACHED", "Maximum token attempts reached");
 		}
 
-		String hash = TokenHashingUtil.hash(plainToken);
-		if (!hash.equals(authToken.getTokenHash())) {
+		if (!matchesToken(authToken, plainToken)) {
 			authToken.setAttemptCount((short) (authToken.getAttemptCount() + 1));
 			if (authToken.getAttemptCount() >= authToken.getMaxAttempts()) {
 				authToken.setUsed(true);
@@ -395,8 +392,26 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	private String generateOtp() {
-		int otp = 100000 + secureRandom.nextInt(900000);
-		return String.valueOf(otp);
+		return DEMO_OTP;
+	}
+
+	private String buildTokenHash(AuthToken authToken, String plainToken) {
+		String saltedToken = plainToken
+			+ "|"
+			+ authToken.getUser().getId()
+			+ "|"
+			+ authToken.getTokenType().name()
+			+ "|"
+			+ authToken.getExpiresAt();
+		return TokenHashingUtil.hash(saltedToken);
+	}
+
+	private boolean matchesToken(AuthToken authToken, String plainToken) {
+		String legacyHash = TokenHashingUtil.hash(plainToken);
+		if (legacyHash.equals(authToken.getTokenHash())) {
+			return true;
+		}
+		return buildTokenHash(authToken, plainToken).equals(authToken.getTokenHash());
 	}
 
 	private void logAttempt(

@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import RegisterPage from './pages/RegisterPage'
 import LoginPage from './pages/LoginPage'
+import PasswordPage from './pages/PasswordPage'
 import MePage from './pages/MePage'
 import AdminUserStatusPage from './pages/AdminUserStatusPage'
 import ProtectedRoute from './routes/ProtectedRoute'
@@ -13,7 +14,8 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/password" element={<Navigate to="/login" replace />} />
+        <Route path="/forgot-password" element={<PasswordPage />} />
+        <Route path="/password" element={<Navigate to="/forgot-password" replace />} />
         <Route
           path="/me"
           element={
