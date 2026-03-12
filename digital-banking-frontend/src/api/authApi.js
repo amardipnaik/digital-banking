@@ -40,6 +40,11 @@ export async function me() {
   return response.data
 }
 
+export async function updateMyProfile(payload) {
+  const response = await http.patch('/api/auth/me/profile', payload)
+  return response.data
+}
+
 export async function updateUserStatus(userId, payload) {
   const response = await http.patch(`/api/admin/auth/users/${userId}/status`, payload)
   return response.data

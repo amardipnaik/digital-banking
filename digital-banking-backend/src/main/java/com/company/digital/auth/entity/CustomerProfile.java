@@ -1,7 +1,10 @@
 package com.company.digital.auth.entity;
 
+import com.company.digital.customer.enums.KycStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -33,6 +36,43 @@ public class CustomerProfile {
 	private String fullName;
 
 	private LocalDate dateOfBirth;
+
+	@Column(name = "address_line_1", length = 150)
+	private String addressLine1;
+
+	@Column(name = "address_line_2", length = 150)
+	private String addressLine2;
+
+	@Column(length = 80)
+	private String city;
+
+	@Column(length = 80)
+	private String state;
+
+	@Column(length = 20)
+	private String postalCode;
+
+	@Column(length = 80)
+	private String country;
+
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 20)
+	private KycStatus kycStatus = KycStatus.PENDING;
+
+	@Column(length = 50)
+	private String governmentId;
+
+	@Column(length = 30)
+	private String governmentIdType;
+
+	private Long kycReviewedBy;
+
+	private LocalDateTime kycReviewedAt;
+
+	@Column(length = 255)
+	private String kycRemarks;
+
+	private Long updatedBy;
 
 	@Column(nullable = false)
 	private LocalDateTime createdAt;

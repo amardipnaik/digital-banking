@@ -8,6 +8,7 @@ import com.company.digital.auth.dto.MeResponse;
 import com.company.digital.auth.dto.MessageResponse;
 import com.company.digital.auth.dto.RegisterCustomerRequest;
 import com.company.digital.auth.dto.ResetPasswordRequest;
+import com.company.digital.auth.dto.UpdateMeProfileRequest;
 import com.company.digital.auth.dto.UpdateUserStatusRequest;
 import com.company.digital.auth.dto.VerificationConfirmRequest;
 import com.company.digital.auth.dto.VerificationRequest;
@@ -290,7 +291,66 @@ public class AuthServiceImpl implements AuthService {
 	public MeResponse me(AuthenticatedUser authenticatedUser) {
 		User user = userRepository.findByIdAndIsDeletedFalse(authenticatedUser.userId())
 			.orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "AUTH_USER_NOT_FOUND", "Authenticated user not found"));
+		return toMeResponse(user);
+	}
 
+	@Override
+	public MeResponse updateMyProfile(AuthenticatedUser authenticatedUser, UpdateMeProfileRequest request) {
+		User user = userRepository.findByIdAndIsDeletedFalse(authenticatedUser.userId())
+			.orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "AUTH_USER_NOT_FOUND", "Authenticated user not found"));
+
+		if (user.getRole().getCode() != RoleCode.CUSTOMER) {
+			throw new ApiException(HttpStatus.FORBIDDEN, "AUTH_UNAUTHORIZED", "Only customer profile can be updated here");
+		}
+
+		CustomerProfile profile = customerProfileRepository.findByUserId(user.getId())
+			.orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "AUTH_USER_NOT_FOUND", "Customer profile not found"));
+
+		if (request.fullName() != null) {
+			String fullName = normalizeNullable(request.fullName());
+			if (fullName == null) {
+				throw new ApiException(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "fullName cannot be blank");
+			}
+			profile.setFullName(fullName);
+		}
+		if (request.dateOfBirth() != null) {
+			profile.setDateOfBirth(request.dateOfBirth());
+		}
+		if (request.addressLine1() != null) {
+			profile.setAddressLine1(normalizeNullable(request.addressLine1()));
+		}
+		if (request.addressLine2() != null) {
+			profile.setAddressLine2(normalizeNullable(request.addressLine2()));
+		}
+		if (request.city() != null) {
+			profile.setCity(normalizeNullable(request.city()));
+		}
+		if (request.state() != null) {
+			profile.setState(normalizeNullable(request.state()));
+		}
+		if (request.postalCode() != null) {
+			profile.setPostalCode(normalizeNullable(request.postalCode()));
+		}
+		if (request.country() != null) {
+			profile.setCountry(normalizeNullable(request.country()));
+		}
+		if (request.governmentId() != null) {
+			String governmentId = normalizeNullable(request.governmentId());
+			if (governmentId != null && customerProfileRepository.existsByGovernmentIdIgnoreCaseAndUserIdNot(governmentId, user.getId())) {
+				throw new ApiException(HttpStatus.CONFLICT, "CUSTOMER_GOVERNMENT_ID_CONFLICT", "governmentId already exists");
+			}
+			profile.setGovernmentId(governmentId);
+		}
+		if (request.governmentIdType() != null) {
+			profile.setGovernmentIdType(normalizeNullable(request.governmentIdType()));
+		}
+
+		customerProfileRepository.save(profile);
+		return toMeResponse(user);
+	}
+
+	private MeResponse toMeResponse(User user) {
+		CustomerProfile profile = customerProfileRepository.findByUserId(user.getId()).orElse(null);
 		return new MeResponse(
 			user.getId(),
 			user.getRole().getCode().name(),
@@ -298,7 +358,18 @@ public class AuthServiceImpl implements AuthService {
 			user.getMobileNumber(),
 			user.getStatus().name(),
 			user.isEmailVerified(),
-			user.isMobileVerified()
+			user.isMobileVerified(),
+			profile == null ? null : profile.getFullName(),
+			profile == null ? null : profile.getDateOfBirth(),
+			profile == null ? null : profile.getAddressLine1(),
+			profile == null ? null : profile.getAddressLine2(),
+			profile == null ? null : profile.getCity(),
+			profile == null ? null : profile.getState(),
+			profile == null ? null : profile.getPostalCode(),
+			profile == null ? null : profile.getCountry(),
+			profile == null ? null : profile.getGovernmentId(),
+			profile == null ? null : profile.getGovernmentIdType(),
+			profile == null || profile.getKycStatus() == null ? null : profile.getKycStatus().name()
 		);
 	}
 
@@ -372,6 +443,14 @@ public class AuthServiceImpl implements AuthService {
 
 	private String normalizeEmail(String email) {
 		return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
+	}
+
+	private String normalizeNullable(String value) {
+		if (value == null) {
+			return null;
+		}
+		String trimmed = value.trim();
+		return trimmed.isEmpty() ? null : trimmed;
 	}
 
 	private Role getOrCreateRole(RoleCode roleCode) {

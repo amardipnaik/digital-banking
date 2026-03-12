@@ -1,30 +1,46 @@
 # Module 02 Customer Management - Frontend UI Design
 
 ## Module Summary
-Admin console UI for customer lifecycle management and KYC operations.
+Admin console UI for customer profile and KYC management, aligned with existing authentication tone and security flow.
 
-## Pages / Routes
-- `/admin/customers`
-- `/admin/customers/add`
-- `/admin/customers/edit/:id`
-- `/admin/customers/:id`
+## Route Plan
+- `/admin/customers` - list, filters, and row actions
+- `/admin/customers/:userId` - detail view, profile edit, KYC update, soft-delete
+
+## API Ownership and Reuse
+- New customer API client: `customerApi.js` for Module 02 endpoints only.
+- Keep auth endpoints in existing `authApi.js`.
+- Reuse `PATCH /api/admin/auth/users/{userId}/status` for ACTIVE/DISABLED actions.
+- Reuse existing auth/session infrastructure: `src/lib/http.js`, `src/context/*`, `src/routes/ProtectedRoute.jsx`.
 
 ## UI Components
-- Customer list table with actions
-- Search/filter controls
-- Add/Edit customer form
-- Customer detail/KYC action panel
+- Customer list table with server-side pagination and sorting.
+- Filter bar: `search`, `kycStatus`, `userStatus`.
+- Quick actions in list: view, disable/enable, soft-delete, restore.
+- Customer detail card combining:
+  - Profile section (editable fields from `customer_profiles`)
+  - KYC action section (`PENDING`/`APPROVED`/`REJECTED`)
+  - Account status action section (calls existing auth status endpoint)
+- Verification assist section (trigger resend using existing auth verification API).
+- Admin activity timeline panel.
+- Soft-delete confirmation modal.
 
 ## Form Fields and Validation
-- Add: fullName, email, phoneNumber, dateOfBirth, address, governmentId, accountType.
-- Edit: fullName, phoneNumber, address, accountStatus, kycStatus.
+- Editable profile fields: full name, DOB, address lines, city, state, postal code, country.
+- Optional KYC fields (if approved in schema): government ID, government ID type, reviewer remarks.
+- Validation mirrors backend constraints and shows API error messages from standard envelope.
 
-## UI States
-- Loading: list and detail fetch states.
-- Empty: no customers / no search results.
-- Error: API error handling with retry.
-- Success: toast notifications for create/update/status actions.
+## UX and State Handling
+- Loading states for list/detail and per-action button busy state.
+- Empty states for no data and no filter results.
+- Inline error state + retry action.
+- Success feedback pattern consistent with existing auth pages.
+- Destructive actions (delete/restore/status/kyc) require confirmation dialog with action reason when applicable.
+
+## Visual Tone and Consistency
+- Keep typography, spacing, form controls, and action hierarchy aligned with current auth pages.
+- Keep CTA wording and message style consistent with existing product tone.
 
 ## Accessibility Notes
-- Table actions keyboard reachable.
-- Clear labels for status dropdowns and action buttons.
+- Keyboard-accessible table actions and dialogs.
+- Proper label associations, focus management after modal close, and clear status text.

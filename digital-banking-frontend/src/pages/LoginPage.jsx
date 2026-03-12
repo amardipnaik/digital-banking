@@ -67,14 +67,29 @@ export default function LoginPage() {
         <h2>Access your account</h2>
         <p className="auth-card-copy">Use your registered email or mobile number to enter the banking portal.</p>
 
-        <form onSubmit={onSubmit} className="form-grid auth-form">
+        <form onSubmit={onSubmit} className="form-grid auth-form" autoComplete="off">
           <label>
             Email or Mobile
-            <input name="loginId" value={form.loginId} onChange={onChange} placeholder="name@example.com or mobile number" required />
+            <input
+              name="loginId"
+              value={form.loginId}
+              onChange={onChange}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              required
+            />
           </label>
           <label>
             Password
-            <input type="password" name="password" value={form.password} onChange={onChange} placeholder="Enter your password" required />
+            <input
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={onChange}
+              autoComplete="new-password"
+              required
+            />
           </label>
           <div className="full-width login-help-row">
             <Link to="/register" className="text-link">

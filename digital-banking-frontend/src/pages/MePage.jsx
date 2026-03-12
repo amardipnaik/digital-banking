@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { confirmVerification, me, requestVerification } from '../api/authApi'
+import { confirmVerification, me, requestVerification, updateMyProfile } from '../api/authApi'
 import { useAuth } from '../context/useAuth'
 import { getApiErrorMessage } from '../lib/http'
 
@@ -20,28 +20,73 @@ function verificationPillClass(isVerified) {
 export default function MePage() {
   const { user: sessionUser, setAuth, token } = useAuth()
   const [profile, setProfile] = useState(sessionUser)
+  const [profileForm, setProfileForm] = useState({
+    fullName: '',
+    dateOfBirth: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: '',
+    governmentId: '',
+    governmentIdType: '',
+  })
   const [emailToken, setEmailToken] = useState('')
   const [mobileToken, setMobileToken] = useState('')
   const [emailMessage, setEmailMessage] = useState('')
   const [mobileMessage, setMobileMessage] = useState('')
+  const [profileMessage, setProfileMessage] = useState('')
   const [emailOtpRequested, setEmailOtpRequested] = useState(false)
   const [mobileOtpRequested, setMobileOtpRequested] = useState(false)
   const [error, setError] = useState('')
   const [loadingEmail, setLoadingEmail] = useState(false)
   const [loadingMobile, setLoadingMobile] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
+
+  function mapUser(responseData) {
+    return {
+      id: responseData.id,
+      role: responseData.role,
+      status: responseData.status,
+      email: responseData.email,
+      mobileNumber: responseData.mobileNumber,
+      emailVerified: responseData.emailVerified,
+      mobileVerified: responseData.mobileVerified,
+      fullName: responseData.fullName || '',
+      dateOfBirth: responseData.dateOfBirth || '',
+      addressLine1: responseData.addressLine1 || '',
+      addressLine2: responseData.addressLine2 || '',
+      city: responseData.city || '',
+      state: responseData.state || '',
+      postalCode: responseData.postalCode || '',
+      country: responseData.country || '',
+      governmentId: responseData.governmentId || '',
+      governmentIdType: responseData.governmentIdType || '',
+      kycStatus: responseData.kycStatus || '',
+    }
+  }
+
+  function mapForm(userData) {
+    return {
+      fullName: userData.fullName || '',
+      dateOfBirth: userData.dateOfBirth || '',
+      addressLine1: userData.addressLine1 || '',
+      addressLine2: userData.addressLine2 || '',
+      city: userData.city || '',
+      state: userData.state || '',
+      postalCode: userData.postalCode || '',
+      country: userData.country || '',
+      governmentId: userData.governmentId || '',
+      governmentIdType: userData.governmentIdType || '',
+    }
+  }
 
   const loadProfile = useCallback(async () => {
     const response = await me()
-    const freshUser = {
-      id: response.data.id,
-      role: response.data.role,
-      status: response.data.status,
-      email: response.data.email,
-      mobileNumber: response.data.mobileNumber,
-      emailVerified: response.data.emailVerified,
-      mobileVerified: response.data.mobileVerified,
-    }
+    const freshUser = mapUser(response.data)
     setProfile(freshUser)
+    setProfileForm(mapForm(freshUser))
     setAuth(token, freshUser)
   }, [setAuth, token])
 
@@ -52,16 +97,9 @@ export default function MePage() {
         if (!mounted) {
           return
         }
-        const freshUser = {
-          id: response.data.id,
-          role: response.data.role,
-          status: response.data.status,
-          email: response.data.email,
-          mobileNumber: response.data.mobileNumber,
-          emailVerified: response.data.emailVerified,
-          mobileVerified: response.data.mobileVerified,
-        }
+        const freshUser = mapUser(response.data)
         setProfile(freshUser)
+        setProfileForm(mapForm(freshUser))
         setAuth(token, freshUser)
       })
       .catch((err) => {
@@ -157,6 +195,42 @@ export default function MePage() {
     }
   }
 
+  function onProfileChange(event) {
+    const { name, value } = event.target
+    setProfileForm((previous) => ({ ...previous, [name]: value }))
+  }
+
+  async function saveProfile(event) {
+    event.preventDefault()
+    setError('')
+    setProfileMessage('')
+    setSavingProfile(true)
+    try {
+      const payload = {
+        fullName: profileForm.fullName.trim(),
+        dateOfBirth: profileForm.dateOfBirth || null,
+        addressLine1: profileForm.addressLine1,
+        addressLine2: profileForm.addressLine2,
+        city: profileForm.city,
+        state: profileForm.state,
+        postalCode: profileForm.postalCode,
+        country: profileForm.country,
+        governmentId: profileForm.governmentId,
+        governmentIdType: profileForm.governmentIdType,
+      }
+      const response = await updateMyProfile(payload)
+      const freshUser = mapUser(response.data)
+      setProfile(freshUser)
+      setProfileForm(mapForm(freshUser))
+      setAuth(token, freshUser)
+      setProfileMessage('Profile updated successfully.')
+    } catch (err) {
+      setError(getApiErrorMessage(err))
+    } finally {
+      setSavingProfile(false)
+    }
+  }
+
   return (
     <div className="stack">
       <section className="panel profile-panel">
@@ -177,16 +251,16 @@ export default function MePage() {
         {profile ? (
           <div className="profile-kv-grid">
             <div className="kv-item">
-              <span className="kv-label">User ID</span>
-              <span className="kv-value">{profile.id}</span>
-            </div>
-            <div className="kv-item">
               <span className="kv-label">Email</span>
               <span className="kv-value">{profile.email}</span>
             </div>
             <div className="kv-item">
               <span className="kv-label">Mobile</span>
               <span className="kv-value">{profile.mobileNumber}</span>
+            </div>
+            <div className="kv-item">
+              <span className="kv-label">Full Name</span>
+              <span className="kv-value">{profile.fullName || '-'}</span>
             </div>
             <div className="kv-item">
               <span className="kv-label">Email Verification</span>
@@ -196,11 +270,78 @@ export default function MePage() {
               <span className="kv-label">Mobile Verification</span>
               <span className={verificationPillClass(profile.mobileVerified)}>{profile.mobileVerified ? 'Verified' : 'Pending'}</span>
             </div>
+            <div className="kv-item">
+              <span className="kv-label">Date of Birth</span>
+              <span className="kv-value">{profile.dateOfBirth || '-'}</span>
+            </div>
+            <div className="kv-item">
+              <span className="kv-label">KYC Status</span>
+              <span className="kv-value">{profile.kycStatus || '-'}</span>
+            </div>
           </div>
         ) : (
           <p>Loading profile...</p>
         )}
       </section>
+
+      {profile?.role === 'CUSTOMER' ? (
+        <section className="panel profile-panel">
+          <div className="profile-header">
+            <div>
+              <h3>Edit Profile</h3>
+              <p className="profile-subtitle">Keep your personal and KYC profile details up to date.</p>
+            </div>
+          </div>
+          <form className="form-grid" onSubmit={saveProfile}>
+            <label>
+              Full Name
+              <input name="fullName" value={profileForm.fullName} onChange={onProfileChange} required />
+            </label>
+            <label>
+              Date of Birth
+              <input type="date" name="dateOfBirth" value={profileForm.dateOfBirth || ''} onChange={onProfileChange} />
+            </label>
+            <label>
+              Address Line 1
+              <input name="addressLine1" value={profileForm.addressLine1} onChange={onProfileChange} />
+            </label>
+            <label>
+              Address Line 2
+              <input name="addressLine2" value={profileForm.addressLine2} onChange={onProfileChange} />
+            </label>
+            <label>
+              City
+              <input name="city" value={profileForm.city} onChange={onProfileChange} />
+            </label>
+            <label>
+              State
+              <input name="state" value={profileForm.state} onChange={onProfileChange} />
+            </label>
+            <label>
+              Postal Code
+              <input name="postalCode" value={profileForm.postalCode} onChange={onProfileChange} />
+            </label>
+            <label>
+              Country
+              <input name="country" value={profileForm.country} onChange={onProfileChange} />
+            </label>
+            <label>
+              Government ID
+              <input name="governmentId" value={profileForm.governmentId} onChange={onProfileChange} />
+            </label>
+            <label>
+              Government ID Type
+              <input name="governmentIdType" value={profileForm.governmentIdType} onChange={onProfileChange} />
+            </label>
+            <div className="full-width">
+              <button className="button" type="submit" disabled={savingProfile}>
+                {savingProfile ? 'Saving...' : 'Save Profile'}
+              </button>
+            </div>
+          </form>
+          {profileMessage ? <p className="status-success">{profileMessage}</p> : null}
+        </section>
+      ) : null}
 
       {profile && (!profile.emailVerified || !profile.mobileVerified) ? (
         <section className="panel verification-panel">

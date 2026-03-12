@@ -4,7 +4,8 @@ import RegisterPage from './pages/RegisterPage'
 import LoginPage from './pages/LoginPage'
 import PasswordPage from './pages/PasswordPage'
 import MePage from './pages/MePage'
-import AdminUserStatusPage from './pages/AdminUserStatusPage'
+import AdminCustomersPage from './pages/AdminCustomersPage'
+import AdminCustomerDetailPage from './pages/AdminCustomerDetailPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 
 function App() {
@@ -25,10 +26,18 @@ function App() {
           }
         />
         <Route
-          path="/admin/user-status"
+          path="/admin/customers"
           element={
             <ProtectedRoute requireAdmin>
-              <AdminUserStatusPage />
+              <AdminCustomersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/customers/:userId"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminCustomerDetailPage />
             </ProtectedRoute>
           }
         />

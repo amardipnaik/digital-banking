@@ -21,7 +21,7 @@ export default function AdminUserStatusPage() {
         status: form.status,
         reason: form.reason,
       })
-      setMessage(response?.data?.message || 'User status updated successfully.')
+      setMessage(response?.message || 'User status updated successfully.')
     } catch (err) {
       setError(getApiErrorMessage(err))
     }

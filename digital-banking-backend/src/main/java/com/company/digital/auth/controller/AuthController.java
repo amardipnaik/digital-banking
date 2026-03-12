@@ -8,6 +8,7 @@ import com.company.digital.auth.dto.MeResponse;
 import com.company.digital.auth.dto.MessageResponse;
 import com.company.digital.auth.dto.RegisterCustomerRequest;
 import com.company.digital.auth.dto.ResetPasswordRequest;
+import com.company.digital.auth.dto.UpdateMeProfileRequest;
 import com.company.digital.auth.dto.VerificationConfirmRequest;
 import com.company.digital.auth.dto.VerificationRequest;
 import com.company.digital.auth.security.AuthenticatedUser;
@@ -22,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -91,6 +93,16 @@ public class AuthController {
 	public ResponseEntity<ApiResponse<MeResponse>> me(Authentication authentication) {
 		AuthenticatedUser authenticatedUser = getAuthenticatedUser(authentication);
 		return ResponseEntity.ok(ApiResponse.success(authService.me(authenticatedUser)));
+	}
+
+	@PatchMapping("/me/profile")
+	@Operation(summary = "Update my profile", description = "Updates authenticated customer profile details")
+	public ResponseEntity<ApiResponse<MeResponse>> updateMyProfile(
+		Authentication authentication,
+		@RequestBody UpdateMeProfileRequest request
+	) {
+		AuthenticatedUser authenticatedUser = getAuthenticatedUser(authentication);
+		return ResponseEntity.ok(ApiResponse.success(authService.updateMyProfile(authenticatedUser, request)));
 	}
 
 	private AuthenticatedUser getAuthenticatedUser(Authentication authentication) {

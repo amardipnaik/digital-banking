@@ -8,6 +8,7 @@ import com.company.digital.auth.dto.MeResponse;
 import com.company.digital.auth.dto.MessageResponse;
 import com.company.digital.auth.dto.RegisterCustomerRequest;
 import com.company.digital.auth.dto.ResetPasswordRequest;
+import com.company.digital.auth.dto.UpdateMeProfileRequest;
 import com.company.digital.auth.dto.UpdateUserStatusRequest;
 import com.company.digital.auth.dto.VerificationConfirmRequest;
 import com.company.digital.auth.dto.VerificationRequest;
@@ -22,5 +23,6 @@ public interface AuthService {
 	MessageResponse resetPassword(ResetPasswordRequest request);
 	MessageResponse logout(AuthenticatedUser authenticatedUser);
 	MeResponse me(AuthenticatedUser authenticatedUser);
+	MeResponse updateMyProfile(AuthenticatedUser authenticatedUser, UpdateMeProfileRequest request);
 	MessageResponse updateUserStatus(Long userId, UpdateUserStatusRequest request, AuthenticatedUser actor);
 }

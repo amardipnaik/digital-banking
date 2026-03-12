@@ -261,6 +261,46 @@ class AuthModuleApiIntegrationTest {
 	}
 
 	@Test
+	void customerCanUpdateMyProfile() throws Exception {
+		String registerPayload = "{" +
+			"\"fullName\":\"Amardip\"," +
+			"\"email\":\"profile-update@test.com\"," +
+			"\"mobileNumber\":\"9000000042\"," +
+			"\"dateOfBirth\":\"1990-01-01\"," +
+			"\"password\":\"Password1\"," +
+			"\"confirmPassword\":\"Password1\"}";
+		assertThat(request("POST", "/api/auth/register/customer", registerPayload, null).statusCode()).isEqualTo(HttpStatus.CREATED.value());
+
+		String loginPayload = "{" +
+			"\"loginId\":\"profile-update@test.com\"," +
+			"\"password\":\"Password1\"," +
+			"\"deviceId\":\"D3\"}";
+		HttpResponse<String> loginResponse = request("POST", "/api/auth/login", loginPayload, null);
+		assertThat(loginResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
+		String token = objectMapper.readTree(loginResponse.body()).path("data").path("accessToken").asText();
+
+		String updatePayload = "{" +
+			"\"fullName\":\"Amardip Naik\"," +
+			"\"dateOfBirth\":\"1991-02-02\"," +
+			"\"addressLine1\":\"Sunrise Apartments\"," +
+			"\"city\":\"Pune\"," +
+			"\"state\":\"Maharashtra\"," +
+			"\"postalCode\":\"411001\"," +
+			"\"country\":\"India\"," +
+			"\"governmentId\":\"ABCDE1234F\"," +
+			"\"governmentIdType\":\"PAN\"}";
+
+		HttpResponse<String> updateResponse = request("PATCH", "/api/auth/me/profile", updatePayload, token);
+		assertThat(updateResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
+
+		JsonNode body = objectMapper.readTree(updateResponse.body()).path("data");
+		assertThat(body.path("fullName").asText()).isEqualTo("Amardip Naik");
+		assertThat(body.path("city").asText()).isEqualTo("Pune");
+		assertThat(body.path("governmentIdType").asText()).isEqualTo("PAN");
+		assertThat(body.path("kycStatus").asText()).isEqualTo("PENDING");
+	}
+
+	@Test
 	void login_shouldAllowPendingVerificationCustomer() throws Exception {
 		createUser("pending@test.com", "9000000008", "Password1", RoleCode.CUSTOMER, false, false, UserStatus.PENDING_VERIFICATION);
 

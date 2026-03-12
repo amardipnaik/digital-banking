@@ -76,6 +76,10 @@ public class User {
 	@Column(nullable = false)
 	private boolean isDeleted = false;
 
+	private Long deletedBy;
+
+	private LocalDateTime deletedAt;
+
 	@Column(nullable = false)
 	private LocalDateTime createdAt;
 

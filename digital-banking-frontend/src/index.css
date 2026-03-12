@@ -580,6 +580,86 @@ a {
   font-weight: 600;
 }
 
+.customer-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.customer-filter-grid {
+  align-items: end;
+}
+
+.customer-filter-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.customer-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.customer-table th,
+.customer-table td {
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  padding: 0.6rem;
+  vertical-align: top;
+}
+
+.customer-table th {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  background: #f7fafc;
+}
+
+.customer-name-cell {
+  font-weight: 600;
+}
+
+.customer-contact-cell {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.customer-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(110px, 1fr));
+  gap: 0.4rem;
+  min-width: 250px;
+}
+
+.customer-action-btn {
+  width: 100%;
+  text-align: center;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.customer-action-view {
+  border-color: #c9dcee;
+}
+
+.timeline-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.timeline-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: #f9fbfd;
+}
+
+.timeline-item p {
+  margin: 0.35rem 0 0;
+}
+
 @media (max-width: 840px) {
   .topbar {
     flex-direction: column;
@@ -608,5 +688,10 @@ a {
   .profile-kv-grid,
   .verification-grid {
     grid-template-columns: 1fr;
+  }
+
+  .customer-actions {
+    grid-template-columns: 1fr;
+    min-width: 140px;
   }
 }

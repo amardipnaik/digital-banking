@@ -26,9 +26,11 @@ export default function Layout({ children }) {
               My Profile
             </NavLink>
             {isAdmin && (
-              <NavLink to="/admin/user-status" className={linkClass}>
-                Admin
-              </NavLink>
+              <>
+                <NavLink to="/admin/customers" className={linkClass}>
+                  Customers
+                </NavLink>
+              </>
             )}
           </nav>
         ) : (
