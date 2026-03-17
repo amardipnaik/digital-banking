@@ -5,7 +5,7 @@ on:
     branches: [ "master", "dev" ]
     paths:
       - "digital-banking-backend/**"
-      - ".github/workflows/build.yml"
+      - ".github/workflows/backend-build.yml"
   pull_request:
     branches: [ "master", "dev" ]
     paths:
