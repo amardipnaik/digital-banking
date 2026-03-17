@@ -6,6 +6,8 @@ import PasswordPage from './pages/PasswordPage'
 import MePage from './pages/MePage'
 import AdminCustomersPage from './pages/AdminCustomersPage'
 import AdminCustomerDetailPage from './pages/AdminCustomerDetailPage'
+import AdminAccountsPage from './pages/AdminAccountsPage'
+import AccountsPage from './pages/AccountsPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 
 function App() {
@@ -26,10 +28,26 @@ function App() {
           }
         />
         <Route
+          path="/accounts"
+          element={
+            <ProtectedRoute>
+              <AccountsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/customers"
           element={
             <ProtectedRoute requireAdmin>
               <AdminCustomersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/accounts"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminAccountsPage />
             </ProtectedRoute>
           }
         />

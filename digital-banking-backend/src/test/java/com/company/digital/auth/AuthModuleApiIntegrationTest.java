@@ -2,6 +2,8 @@ package com.company.digital.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.company.digital.account.repository.AccountRepository;
+import com.company.digital.account.repository.AccountStatusHistoryRepository;
 import com.company.digital.auth.entity.AuthToken;
 import com.company.digital.auth.entity.Role;
 import com.company.digital.auth.entity.User;
@@ -64,8 +66,16 @@ class AuthModuleApiIntegrationTest {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
+	@Autowired
+	private AccountStatusHistoryRepository accountStatusHistoryRepository;
+
+	@Autowired
+	private AccountRepository accountRepository;
+
 	@BeforeEach
 	void cleanDatabase() {
+		accountStatusHistoryRepository.deleteAll();
+		accountRepository.deleteAll();
 		authTokenRepository.deleteAll();
 		loginActivityLogRepository.deleteAll();
 		customerProfileRepository.deleteAll();

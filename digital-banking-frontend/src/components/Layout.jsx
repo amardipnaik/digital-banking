@@ -25,10 +25,18 @@ export default function Layout({ children }) {
             <NavLink to="/me" className={linkClass}>
               My Profile
             </NavLink>
+            {!isAdmin && (
+              <NavLink to="/accounts" className={linkClass}>
+                Accounts
+              </NavLink>
+            )}
             {isAdmin && (
               <>
                 <NavLink to="/admin/customers" className={linkClass}>
                   Customers
+                </NavLink>
+                <NavLink to="/admin/accounts" className={linkClass}>
+                  Accounts
                 </NavLink>
               </>
             )}

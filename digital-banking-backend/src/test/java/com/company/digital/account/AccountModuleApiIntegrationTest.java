@@ -1,7 +1,9 @@
-package com.company.digital.customer;
+package com.company.digital.account;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.company.digital.account.entity.Account;
+import com.company.digital.account.enums.AccountStatus;
 import com.company.digital.account.repository.AccountRepository;
 import com.company.digital.account.repository.AccountStatusHistoryRepository;
 import com.company.digital.auth.entity.CustomerProfile;
@@ -35,7 +37,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-class CustomerModuleApiIntegrationTest {
+class AccountModuleApiIntegrationTest {
 
 	@LocalServerPort
 	private int port;
@@ -66,13 +68,13 @@ class CustomerModuleApiIntegrationTest {
 	private CustomerAdminActionRepository customerAdminActionRepository;
 
 	@Autowired
-	private PasswordEncoder passwordEncoder;
-
-	@Autowired
 	private AccountStatusHistoryRepository accountStatusHistoryRepository;
 
 	@Autowired
 	private AccountRepository accountRepository;
+
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 
 	@BeforeEach
 	void cleanDatabase() {
@@ -88,40 +90,59 @@ class CustomerModuleApiIntegrationTest {
 	}
 
 	@Test
-	void adminCanListCustomers() throws Exception {
-		createCustomer("cust1@test.com", "9000000101", "Customer One", KycStatus.APPROVED);
-		createCustomer("cust2@test.com", "9000000102", "Customer Two", KycStatus.PENDING);
-		createAdmin("admin@test.com", "9000000199", "Password1");
+	void eligibleCustomerCanCreateAndListOwnAccounts() throws Exception {
+		createCustomer("acc-user@test.com", "9000000151", "Acc User", KycStatus.APPROVED);
+		String token = loginAndGetToken("acc-user@test.com", "Password1");
 
-		String token = loginAndGetToken("admin@test.com", "Password1");
+		String payload = "{" +
+			"\"accountType\":\"SAVINGS\"," +
+			"\"currencyCode\":\"INR\"}";
+		HttpResponse<String> createResponse = request("POST", "/api/accounts", payload, token);
+		assertThat(createResponse.statusCode()).isEqualTo(HttpStatus.CREATED.value());
+		assertThat(objectMapper.readTree(createResponse.body()).path("data").path("status").asText()).isEqualTo("PENDING_APPROVAL");
 
-		HttpResponse<String> response = request("GET", "/api/admin/customers?page=0&size=10", null, token);
-		assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
-		assertThat(objectMapper.readTree(response.body()).path("data").path("items").size()).isEqualTo(2);
+		HttpResponse<String> listResponse = request("GET", "/api/accounts?page=0&size=10", null, token);
+		assertThat(listResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
+		assertThat(objectMapper.readTree(listResponse.body()).path("data").path("items").size()).isEqualTo(1);
 	}
 
 	@Test
-	void adminCanUpdateKycAndSoftDeleteRestoreCustomer() throws Exception {
-		User customer = createCustomer("kyc@test.com", "9000000103", "Kyc User", KycStatus.PENDING);
-		createAdmin("admin2@test.com", "9000000198", "Password1");
-		String token = loginAndGetToken("admin2@test.com", "Password1");
+	void customerWithPendingKycCannotCreateAccount() throws Exception {
+		createCustomer("pending-kyc@test.com", "9000000152", "Pending User", KycStatus.PENDING);
+		String token = loginAndGetToken("pending-kyc@test.com", "Password1");
 
-		String kycPayload = "{" +
-			"\"kycStatus\":\"APPROVED\"," +
-			"\"remarks\":\"Verified docs\"}";
-		HttpResponse<String> kycResponse = request("PATCH", "/api/admin/customers/" + customer.getId() + "/kyc", kycPayload, token);
-		assertThat(kycResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
+		String payload = "{" +
+			"\"accountType\":\"SAVINGS\"," +
+			"\"currencyCode\":\"INR\"}";
+		HttpResponse<String> createResponse = request("POST", "/api/accounts", payload, token);
+		assertThat(createResponse.statusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+		assertThat(objectMapper.readTree(createResponse.body()).path("error").path("code").asText()).isEqualTo("ACCOUNT_NOT_ELIGIBLE");
+	}
 
-		CustomerProfile updatedProfile = customerProfileRepository.findByUserId(customer.getId()).orElseThrow();
-		assertThat(updatedProfile.getKycStatus()).isEqualTo(KycStatus.APPROVED);
+	@Test
+	void adminCanApprovePendingAccountAndHistoryIsRecorded() throws Exception {
+		createCustomer("acc-admin-flow@test.com", "9000000153", "Customer Three", KycStatus.APPROVED);
+		createAdmin("acc-admin@test.com", "9000000197", "Password1");
 
-		HttpResponse<String> deleteResponse = request("DELETE", "/api/admin/customers/" + customer.getId(), null, token);
-		assertThat(deleteResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
-		assertThat(userRepository.findById(customer.getId()).orElseThrow().isDeleted()).isTrue();
+		String customerToken = loginAndGetToken("acc-admin-flow@test.com", "Password1");
+		String createPayload = "{" +
+			"\"accountType\":\"CURRENT\"," +
+			"\"currencyCode\":\"INR\"}";
+		HttpResponse<String> createResponse = request("POST", "/api/accounts", createPayload, customerToken);
+		Long accountId = objectMapper.readTree(createResponse.body()).path("data").path("accountId").asLong();
 
-		HttpResponse<String> restoreResponse = request("PATCH", "/api/admin/customers/" + customer.getId() + "/restore", "{}", token);
-		assertThat(restoreResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
-		assertThat(userRepository.findById(customer.getId()).orElseThrow().isDeleted()).isFalse();
+		String adminToken = loginAndGetToken("acc-admin@test.com", "Password1");
+		String updatePayload = "{" +
+			"\"status\":\"ACTIVE\"," +
+			"\"reason\":\"Approved by admin\"}";
+		HttpResponse<String> updateResponse = request("PATCH", "/api/admin/accounts/" + accountId + "/status", updatePayload, adminToken);
+		assertThat(updateResponse.statusCode()).isEqualTo(HttpStatus.OK.value());
+		assertThat(objectMapper.readTree(updateResponse.body()).path("data").path("status").asText()).isEqualTo("ACTIVE");
+
+		Account persisted = accountRepository.findById(accountId).orElseThrow();
+		assertThat(persisted.getStatus()).isEqualTo(AccountStatus.ACTIVE);
+		assertThat(accountStatusHistoryRepository.findByAccountIdOrderByCreatedAtDesc(accountId, org.springframework.data.domain.PageRequest.of(0, 10)).getTotalElements())
+			.isGreaterThanOrEqualTo(2);
 	}
 
 	private String loginAndGetToken(String loginId, String password) throws Exception {
@@ -204,7 +225,6 @@ class CustomerModuleApiIntegrationTest {
 		switch (method) {
 			case "POST" -> builder.POST(jsonBody == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(jsonBody));
 			case "PATCH" -> builder.method("PATCH", jsonBody == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(jsonBody));
-			case "DELETE" -> builder.DELETE();
 			case "GET" -> builder.GET();
 			default -> throw new IllegalArgumentException("Unsupported method: " + method);
 		}

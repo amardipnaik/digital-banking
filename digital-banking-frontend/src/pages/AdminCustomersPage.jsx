@@ -46,7 +46,7 @@ export default function AdminCustomersPage() {
     setFilters((previous) => ({ ...previous, [name]: value }))
   }
 
-  async function handleStatus(userId, status) {
+  async function handleUserStatus(userId, status) {
     setError('')
     setMessage('')
     setBusyUserId(userId)
@@ -84,7 +84,7 @@ export default function AdminCustomersPage() {
     <section className="panel stack">
       <div className="profile-header">
         <div>
-          <h2>Admin: Customer Management</h2>
+          <h2>Customer Management</h2>
           <p className="profile-subtitle">Review, verify KYC, and control account status.</p>
         </div>
       </div>
@@ -160,7 +160,7 @@ export default function AdminCustomersPage() {
                     <button
                       className="button button-secondary customer-action-btn"
                       type="button"
-                      onClick={() => handleStatus(customer.userId, customer.userStatus === 'DISABLED' ? 'ACTIVE' : 'DISABLED')}
+                      onClick={() => handleUserStatus(customer.userId, customer.userStatus === 'DISABLED' ? 'ACTIVE' : 'DISABLED')}
                       disabled={busyUserId === customer.userId}
                     >
                       {customer.userStatus === 'DISABLED' ? 'Enable' : 'Disable'}
