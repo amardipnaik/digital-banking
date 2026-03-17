@@ -1,4 +1,4 @@
-name: Build & Package
+name: Backend Build & Package
 
 on:
   push:
@@ -10,6 +10,7 @@ on:
     branches: [ "master", "dev" ]
     paths:
       - "digital-banking-backend/**"
+      - ".github/workflows/backend-build.yml"
 
 # Cancel in-progress runs for the same branch
 concurrency:
@@ -25,7 +26,7 @@ jobs:
   # Job 1: Test & Build JAR
   # ─────────────────────────────────────────────
   build:
-    name: Test & Build
+    name: Backend Test & Build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -72,7 +73,7 @@ jobs:
   # Job 2: Build & Push Docker image to GHCR
   # ─────────────────────────────────────────────
   docker:
-    name: Build & Push Docker Image
+    name: Backend Build & Push Docker Image
     runs-on: ubuntu-latest
     needs: build
     # Only publish images on pushes to main/develop (not on PRs)

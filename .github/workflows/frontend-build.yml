@@ -5,11 +5,12 @@ on:
     branches: [ "master", "dev" ]
     paths:
       - "digital-banking-frontend/**"
-      - ".github/workflows/frontend-backend-build.yml"
+      - ".github/workflows/frontend-build.yml"
   pull_request:
     branches: [ "master", "dev" ]
     paths:
       - "digital-banking-frontend/**"
+      - ".github/workflows/frontend-build.yml"
 
 # Cancel in-progress runs for the same branch
 concurrency:
@@ -23,7 +24,7 @@ env:
 jobs:
   # Job 1: Lint & Build frontend
   build:
-    name: Lint & Build
+    name: Frontend Lint & Build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -58,7 +59,7 @@ jobs:
 
   # Job 2: Build & Push Docker image to GHCR
   docker:
-    name: Build & Push Docker Image
+    name: Frontend Build & Push Docker Image
     runs-on: ubuntu-latest
     needs: build
     if: github.event_name == 'push'
