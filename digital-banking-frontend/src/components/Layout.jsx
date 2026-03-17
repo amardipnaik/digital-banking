@@ -26,9 +26,20 @@ export default function Layout({ children }) {
               My Profile
             </NavLink>
             {!isAdmin && (
-              <NavLink to="/accounts" className={linkClass}>
-                Accounts
-              </NavLink>
+              <>
+                <NavLink to="/accounts" className={linkClass}>
+                  Accounts
+                </NavLink>
+                <NavLink to="/transactions" className={linkClass}>
+                  Transactions
+                </NavLink>
+                <NavLink to="/balances" className={linkClass}>
+                  Balances
+                </NavLink>
+                <NavLink to="/transactions/history" className={linkClass}>
+                  History
+                </NavLink>
+              </>
             )}
             {isAdmin && (
               <>
@@ -37,6 +48,15 @@ export default function Layout({ children }) {
                 </NavLink>
                 <NavLink to="/admin/accounts" className={linkClass}>
                   Accounts
+                </NavLink>
+                <NavLink to="/admin/transactions" className={linkClass}>
+                  Transactions
+                </NavLink>
+                <NavLink to="/admin/balances" className={linkClass}>
+                  Balances
+                </NavLink>
+                <NavLink to="/admin/transactions/history" className={linkClass}>
+                  History
                 </NavLink>
               </>
             )}

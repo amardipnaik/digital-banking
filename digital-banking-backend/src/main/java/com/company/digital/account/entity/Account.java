@@ -16,6 +16,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
@@ -47,6 +48,12 @@ public class Account {
 	@Column(nullable = false, length = 30)
 	private AccountStatus status = AccountStatus.PENDING_APPROVAL;
 
+	@Column(nullable = false, precision = 19, scale = 2)
+	private BigDecimal availableBalance = BigDecimal.ZERO;
+
+	@Column(nullable = false, precision = 19, scale = 2)
+	private BigDecimal ledgerBalance = BigDecimal.ZERO;
+
 	private LocalDateTime openedAt;
 
 	private LocalDateTime closedAt;
@@ -66,6 +73,12 @@ public class Account {
 	@PrePersist
 	void onCreate() {
 		createdAt = LocalDateTime.now();
+		if (availableBalance == null) {
+			availableBalance = BigDecimal.ZERO;
+		}
+		if (ledgerBalance == null) {
+			ledgerBalance = BigDecimal.ZERO;
+		}
 	}
 
 	@PreUpdate

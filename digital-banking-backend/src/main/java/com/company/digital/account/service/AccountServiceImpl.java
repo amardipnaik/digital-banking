@@ -25,6 +25,7 @@ import com.company.digital.auth.repository.UserRepository;
 import com.company.digital.auth.security.AuthenticatedUser;
 import com.company.digital.common.exception.ApiException;
 import com.company.digital.customer.enums.KycStatus;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
@@ -72,6 +73,8 @@ public class AccountServiceImpl implements AccountService {
 		account.setAccountType(request.accountType());
 		account.setCurrencyCode(normalizeCurrency(request.currencyCode()));
 		account.setStatus(AccountStatus.PENDING_APPROVAL);
+		account.setAvailableBalance(BigDecimal.ZERO);
+		account.setLedgerBalance(BigDecimal.ZERO);
 		account.setCreatedBy(actor.userId());
 		account.setUpdatedBy(actor.userId());
 

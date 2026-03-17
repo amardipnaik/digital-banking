@@ -2,6 +2,7 @@ package com.company.digital.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.company.digital.transaction.repository.AccountTransactionRepository;
 import com.company.digital.account.repository.AccountRepository;
 import com.company.digital.account.repository.AccountStatusHistoryRepository;
 import com.company.digital.auth.entity.AuthToken;
@@ -72,8 +73,12 @@ class AuthModuleApiIntegrationTest {
 	@Autowired
 	private AccountRepository accountRepository;
 
+	@Autowired
+	private AccountTransactionRepository accountTransactionRepository;
+
 	@BeforeEach
 	void cleanDatabase() {
+		accountTransactionRepository.deleteAll();
 		accountStatusHistoryRepository.deleteAll();
 		accountRepository.deleteAll();
 		authTokenRepository.deleteAll();

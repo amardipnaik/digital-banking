@@ -16,3 +16,4 @@ This folder contains module-wise documentation files for the Digital Banking pro
 - `03-frontend-ui.md`
 - `04-backend.md`
 - `05-api-design.md`
+- `06-*-reuse-migration-postgres17.sql` (optional/additive migration script where applicable)

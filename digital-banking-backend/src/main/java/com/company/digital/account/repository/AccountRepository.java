@@ -7,11 +7,21 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 
 public interface AccountRepository extends JpaRepository<Account, Long> {
 	Optional<Account> findByIdAndUserId(Long id, Long userId);
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("select a from Account a where a.id = :id")
+	Optional<Account> findByIdForUpdate(@Param("id") Long id);
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("select a from Account a where a.id = :id and a.user.id = :userId")
+	Optional<Account> findByIdAndUserIdForUpdate(@Param("id") Long id, @Param("userId") Long userId);
 
 	boolean existsByAccountNumber(String accountNumber);
 

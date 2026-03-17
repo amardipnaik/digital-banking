@@ -6,6 +6,7 @@ import com.company.digital.account.entity.Account;
 import com.company.digital.account.enums.AccountStatus;
 import com.company.digital.account.repository.AccountRepository;
 import com.company.digital.account.repository.AccountStatusHistoryRepository;
+import com.company.digital.transaction.repository.AccountTransactionRepository;
 import com.company.digital.auth.entity.CustomerProfile;
 import com.company.digital.auth.entity.Role;
 import com.company.digital.auth.entity.User;
@@ -74,10 +75,14 @@ class AccountModuleApiIntegrationTest {
 	private AccountRepository accountRepository;
 
 	@Autowired
+	private AccountTransactionRepository accountTransactionRepository;
+
+	@Autowired
 	private PasswordEncoder passwordEncoder;
 
 	@BeforeEach
 	void cleanDatabase() {
+		accountTransactionRepository.deleteAll();
 		accountStatusHistoryRepository.deleteAll();
 		accountRepository.deleteAll();
 		customerAdminActionRepository.deleteAll();
